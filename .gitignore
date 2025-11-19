@@ -1,17 +1,26 @@
-.vscode
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # Pylance
 pyrightconfig.json
 
-# Byte-compiled / optimized / DLL files
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
+*.egg
+*.egg-info/
+.installed.cfg
 .Python
 build/
 develop-eggs/
@@ -25,24 +34,78 @@ parts/
 sdist/
 var/
 wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
-
-# Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
 
-syn_out/
-checkpoints/
-.gradio
+# Virtual environments
+venv/
+env/
+ENV/
+myproject_env/
+.venv
 
-# Ignore generated sample .wav files
-**/*.wav
+# PyInstaller
+*.manifest
+*.spec
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Models and cache
+checkpoints/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+models/
+.cache/
+huggingface/
+hf_cache/
+
+# Generated outputs
+output/
+outputs/
+syn_out/
+*.wav
+*.mp3
+*.flac
+*_story.txt
+narrated_*.txt
+narrated_*.wav
+gpu_test.wav
+my_story.txt
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Gradio
+.gradio/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+myaudio.wav
+cindrella.txt
+narrated_story.txt
+cindrella.wav
+cindrella.json
+gpu_test.txt
+gpu_test.json
+README.md
+venv/
+
