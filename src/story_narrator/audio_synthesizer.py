@@ -254,7 +254,7 @@ class AudioSynthesizer:
 # Example usage
 if __name__ == "__main__":
     # Example: Synthesize a simple story
-    synthesizer = AudioSynthesizer(device="cuda")  # or "cpu"
+    synthesizer = AudioSynthesizer(device="cuda")
     
     # Set voice sample (you need a reference voice file)
     # synthesizer.set_voice("path/to/reference_voice.wav")
