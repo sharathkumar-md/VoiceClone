@@ -1,0 +1,109 @@
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Pylance
+pyrightconfig.json
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.installed.cfg
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+venv/
+env/
+ENV/
+myproject_env/
+.venv
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Models and cache
+checkpoints/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+models/
+.cache/
+huggingface/
+hf_cache/
+
+# Generated outputs
+output/
+outputs/
+syn_out/
+*.wav
+*.mp3
+*.flac
+*_story.txt
+narrated_*.txt
+narrated_*.wav
+gpu_test.wav
+my_story.txt
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Gradio
+.gradio/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+myaudio.wav
+cindrella.txt
+narrated_story.txt
+cindrella.wav
+cindrella.json
+gpu_test.txt
+gpu_test.json
+README.md
