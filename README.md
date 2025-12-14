@@ -18,8 +18,6 @@ python check_setup.py
 python run_app.py
 ```
 
-**Then open:** http://localhost:7860
-
 ---
 
 ## What This Does
