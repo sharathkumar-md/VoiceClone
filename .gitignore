@@ -83,9 +83,10 @@ hf_cache/
 transformers_cache/
 
 # ============================================================================
-# Generated Outputs (Keep samples/ for reference voices)
+# Generated Outputs
 # ============================================================================
 src/output/
+samples/
 outputs/
 chatterbox_runpod/samples/
 syn_out/

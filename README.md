@@ -1,14 +1,15 @@
-# 🎙️ Chatterbox Story Narrator
+# Chatterbox Story Narrator
 
 AI-powered story generation and narration with voice cloning using Chatterbox TTS.
 
-**Powered by RunPod Serverless GPU - 100x faster than local synthesis!**
+**Powered by RunPod Serverless GPU - 100x faster than local synthesis**
 
-## 🚀 Quick Start (3 Commands!)
+## Quick Start (3 Commands)
 
 ```bash
 # 1. Activate environment
-source .venv/Scripts/activate
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # Linux/Mac
 
 # 2. Verify setup (optional but recommended)
 python check_setup.py
@@ -21,57 +22,83 @@ python run_app.py
 
 ---
 
-## 📋 What This Does
+## What This Does
 
 1. **Enter a story theme** (e.g., "A dragon who's afraid of heights")
 2. **Upload a voice sample** (optional - uses default voice if not provided)
-3. **Click Generate** → Get a fully narrated story with voice cloning!
+3. **Click Generate** to get a fully narrated story with voice cloning
 
 ---
 
-## ⚙️ First Time Setup
+## First Time Setup
 
-### 1. Configure API Keys (Required!)
+### 1. Create Virtual Environment
 
-Edit `.env` file and add:
+```bash
+# Create virtual environment
+python -m venv .venv
+
+# Activate it
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # Linux/Mac
+
+# Upgrade pip
+python -m pip install --upgrade pip
+```
+
+### 2. Install Dependencies
+
+```bash
+# Install all required packages
+pip install -r requirements.txt
+```
+
+### 3. Configure API Keys (Required)
+
+Copy `.env.example` to `.env` and edit it:
+
+```bash
+# Windows
+copy .env.example .env
+
+# Linux/Mac
+cp .env.example .env
+```
+
+Edit `.env` file and add your API keys:
 
 ```env
 # Google Gemini (for story generation)
 GOOGLE_API_KEY=your_google_api_key_here
 GEMINI_MODEL=gemini-2.0-flash-exp
 
-# RunPod (for fast GPU synthesis - REQUIRED!)
+# RunPod (for fast GPU synthesis - REQUIRED)
 RUNPOD_API_KEY=your_runpod_api_key_here
 RUNPOD_ENDPOINT_ID=your_endpoint_id_here
 USE_RUNPOD=true
 ```
 
-**Get your keys:**
+**Get your API keys:**
 - Google API: https://makersuite.google.com/app/apikey
 - RunPod: https://www.runpod.io/console/serverless (see RunPod Setup below)
 
-### 2. Install Dependencies (if not installed)
+### 4. Set Up RunPod Endpoint (Required)
 
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Set Up RunPod Endpoint (Required!)
-
-See [RunPod Setup Guide](#-runpod-serverless-deployment-required) below for detailed instructions.
+See [RunPod Setup Guide](#runpod-serverless-deployment) below for detailed instructions.
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 VoiceClone/
-├── run_app.py                   # Main entry point - START HERE!
+├── run_app.py                   # Main entry point - START HERE
 ├── check_setup.py               # System verification script
 ├── .env                         # Your API keys (create from .env.example)
 ├── .env.example                 # Environment template
 ├── requirements.txt             # Python dependencies
 ├── .gitignore                   # Git ignore rules
+├── .venv/                       # Virtual environment
 │
 ├── src/
 │   ├── chatterbox/              # Core Chatterbox TTS engine
@@ -114,23 +141,28 @@ VoiceClone/
 
 ---
 
-## 🎯 Features
+## Features
 
-✅ **AI Story Generation** using Google Gemini
-✅ **Voice Cloning** using Chatterbox TTS
-✅ **Emotion Control** - make it dramatic or calm
-✅ **Multiple Styles** - adventure, fantasy, mystery, sci-fi, horror, romance
-✅ **Web Interface** - easy-to-use Gradio UI
-✅ **RunPod Serverless** - 100x faster synthesis with cloud GPUs
-✅ **Watermarked Audio** - Built-in PerTh watermarking for responsible AI
+- AI Story Generation using Google Gemini
+- Voice Cloning using Chatterbox TTS
+- Emotion Control - make it dramatic or calm
+- Multiple Styles - adventure, fantasy, mystery, sci-fi, horror, romance
+- Web Interface - easy-to-use Gradio UI
+- RunPod Serverless - 100x faster synthesis with cloud GPUs
+- Watermarked Audio - Built-in PerTh watermarking for responsible AI
 
 ---
 
-## 📖 Usage
+## Usage
 
 ### Web Interface (Recommended)
 
 ```bash
+# Activate virtual environment first
+.venv\Scripts\activate  # Windows
+# source .venv/bin/activate  # Linux/Mac
+
+# Run the application
 python run_app.py
 ```
 
@@ -150,6 +182,9 @@ Click **"Generate & Narrate"** and wait!
 ### Command Line Interface
 
 ```bash
+# Activate virtual environment first
+.venv\Scripts\activate  # Windows
+
 # From project root
 python -m story_narrator.cli --theme "A robot discovers emotions" --style adventure --voice samples/test_voice.wav
 
@@ -160,13 +195,14 @@ python -m story_narrator.cli --theme "A robot discovers emotions" --style advent
 
 ---
 
-## 🚀 RunPod Serverless Deployment (REQUIRED!)
+## RunPod Serverless Deployment
 
-This system uses RunPod cloud GPUs for fast synthesis (reduces generation time from 6-7 hours to just minutes!).
+This system uses RunPod cloud GPUs for fast synthesis (reduces generation time from 6-7 hours to just minutes).
 
 ### Quick Setup
 
 1. **Create RunPod Account**: https://www.runpod.io/console/serverless
+
 2. **Create New Endpoint**:
    - Name: `chatterbox-tts`
    - Template: `runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel`
@@ -198,7 +234,7 @@ This system uses RunPod cloud GPUs for fast synthesis (reduces generation time f
 
 ### Using the System
 
-RunPod is enabled by default! Just use the system normally:
+RunPod is enabled by default. Just use the system normally:
 
 ```python
 from story_narrator import StoryNarrator, StoryPrompt
@@ -220,7 +256,7 @@ result = narrator.create_story_narration(
 )
 ```
 
-**To use local GPU instead** (very slow!), set `USE_RUNPOD=false` in `.env`
+**To use local GPU instead** (very slow), set `USE_RUNPOD=false` in `.env`
 
 ### Cost Estimation
 
@@ -230,15 +266,16 @@ result = narrator.create_story_narration(
 - **RTX 3090**: ~$0.15 - $0.30 per story (3-5 minutes)
 
 **Comparison:**
-- 🚀 RunPod: 1-5 minutes, ~$0.50
-- 🐌 Local RTX 3050: 6-7 hours, free but extremely slow!
+- RunPod: 1-5 minutes, ~$0.50
+- Local RTX 3050: 6-7 hours, free but extremely slow
 
-With `Min Workers = 0`, you only pay when actively generating!
+With `Min Workers = 0`, you only pay when actively generating.
+
 **Cold start:** First request takes ~30-60 seconds to load models, then subsequent chunks are fast.
 
 ---
 
-## 🎬 Example Prompts
+## Example Prompts
 
 - "A lonely robot discovers emotions"
 - "A chef who can cook with magic"
@@ -248,7 +285,7 @@ With `Min Workers = 0`, you only pay when actively generating!
 
 ---
 
-## ❓ Troubleshooting
+## Troubleshooting
 
 ### Error: "GOOGLE_API_KEY not set"
 - Edit `.env` file
@@ -260,7 +297,7 @@ With `Min Workers = 0`, you only pay when actively generating!
 - GPU recommended but CPU works too (slower)
 
 ### Audio not playing
-- Check output folder: `output/story_*.wav`
+- Check output folder: `src/output/story_*.wav`
 - Try downloading the file directly
 
 ### RunPod: "Handler not found"
@@ -272,27 +309,43 @@ With `Min Workers = 0`, you only pay when actively generating!
 - First request loads models (~30-60 seconds on A100)
 - Subsequent requests are fast (~1-2 min per chunk)
 
+### Virtual Environment Issues
+```bash
+# If activation fails, recreate the environment
+rm -rf .venv  # Linux/Mac
+# rmdir /s .venv  # Windows
+
+# Recreate
+python -m venv .venv
+.venv\Scripts\activate  # Windows
+pip install -r requirements.txt
+```
+
 ---
 
-## 🧪 System Verification
+## System Verification
 
 Verify your setup is correct before running:
 
 ```bash
+# Activate virtual environment first
+.venv\Scripts\activate  # Windows
+
+# Run verification
 python check_setup.py
 ```
 
 This will check:
-- ✓ Python version and virtual environment
-- ✓ GPU availability (local - optional)
-- ✓ All required dependencies (including RunPod)
-- ✓ .env configuration (Google API + RunPod keys)
-- ✓ Project modules can be imported
-- ✓ Sample files and directories exist
+- Python version and virtual environment
+- GPU availability (local - optional)
+- All required dependencies (including RunPod)
+- .env configuration (Google API + RunPod keys)
+- Project modules can be imported
+- Sample files and directories exist
 
 ---
 
-## 🔧 Advanced Configuration
+## Advanced Configuration
 
 ### Voice Settings
 
@@ -321,7 +374,7 @@ This will check:
 
 ---
 
-## 🛡️ Built-in PerTh Watermarking
+## Built-in PerTh Watermarking
 
 Every audio file includes [Resemble AI's Perth Watermarker](https://github.com/resemble-ai/perth) - imperceptible neural watermarks for responsible AI.
 
@@ -332,7 +385,7 @@ import perth
 import librosa
 
 # Load audio
-audio, sr = librosa.load("output/story.wav", sr=None)
+audio, sr = librosa.load("src/output/story.wav", sr=None)
 
 # Extract watermark
 watermarker = perth.PerthImplicitWatermarker()
@@ -342,7 +395,7 @@ print(f"Watermark: {watermark}")  # 0.0 or 1.0
 
 ---
 
-## 📚 About Chatterbox TTS
+## About Chatterbox TTS
 
 Chatterbox is Resemble AI's first production-grade open source TTS model (MIT License).
 
@@ -352,7 +405,7 @@ Chatterbox is Resemble AI's first production-grade open source TTS model (MIT Li
 - Unique emotion exaggeration control
 - Ultra-stable with alignment-informed inference
 - Trained on 0.5M hours of cleaned data
-- [Outperforms ElevenLabs](https://podonos.com/resembleai/chatterbox)
+- Outperforms ElevenLabs
 
 **Links:**
 - [Demo Samples](https://resemble-ai.github.io/chatterbox_demopage/)
@@ -361,19 +414,19 @@ Chatterbox is Resemble AI's first production-grade open source TTS model (MIT Li
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Please feel free to submit issues and pull requests.
 
 ---
 
-## 📄 License
+## License
 
 This project uses Chatterbox TTS which is licensed under MIT License.
 
 ---
 
-## 🙏 Acknowledgements
+## Acknowledgements
 
 - [Chatterbox TTS](https://github.com/resemble-ai/chatterbox) by Resemble AI
 - [Cosyvoice](https://github.com/FunAudioLLM/CosyVoice)
@@ -384,17 +437,17 @@ This project uses Chatterbox TTS which is licensed under MIT License.
 
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 Don't use this model to do bad things. Use responsibly and ethically.
 
 ---
 
-## 📞 Support
+## Support
 
 - Check [GitHub Issues](https://github.com/sharathkumar-md/VoiceClone/issues)
 - Join [Discord Community](https://discord.gg/rJq9cRJBJ6)
 
 ---
 
-**Enjoy creating stories! 🎉**
+**Enjoy creating stories!**
