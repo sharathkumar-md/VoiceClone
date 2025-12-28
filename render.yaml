@@ -6,7 +6,7 @@ services:
   - type: web
     name: voiceclone-api
     runtime: python
-    plan: standard  # You may need standard or higher for ML workloads
+    plan: free  # WARNING: May fail due to ML dependencies! Upgrade to standard if build fails
     region: oregon  # Choose your preferred region
     branch: main
     buildCommand: pip install --upgrade pip && pip install -r requirements.txt
@@ -30,7 +30,7 @@ services:
   - type: web
     name: voiceclone-frontend
     runtime: node
-    plan: starter
+    plan: free  # Using free tier to reduce costs
     region: oregon  # Same region as backend for lower latency
     branch: main
     rootDir: frontend
