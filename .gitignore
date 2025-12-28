@@ -1,0 +1,193 @@
+# ============================================================================
+# Environment and Secrets
+# ============================================================================
+.env
+.env.local
+.env.*.local
+.env.production
+*.key
+*.pem
+credentials.json
+
+# Render deployment
+.render/
+
+# ============================================================================
+# Documentation (detailed explanation - keep internal)
+# ============================================================================
+PROJECT_EXPLANATION.md
+FRONTEND_PLAN.md
+QUICK_START_FRONTEND.md
+DEVELOPMENT.md
+start_dev.bat
+start_dev.sh
+RUNPOD_DEPLOYMENT.md
+DASHBOARD_PLAN.md
+RENDER_DEPLOYMENT.md
+
+# ============================================================================
+# Python
+# ============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.installed.cfg
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ============================================================================
+# Virtual Environments
+# ============================================================================
+venv/
+env/
+ENV/
+.venv/
+myproject_env/
+
+# ============================================================================
+# IDE and Editors
+# ============================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+pyrightconfig.json
+
+# ============================================================================
+# PyInstaller
+# ============================================================================
+*.manifest
+*.spec
+
+# ============================================================================
+# Testing
+# ============================================================================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ============================================================================
+# Models, Checkpoints, and Cache
+# ============================================================================
+checkpoints/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+models/
+.cache/
+huggingface/
+hf_cache/
+.huggingface/
+transformers_cache/
+
+# ============================================================================
+# Generated Outputs
+# ============================================================================
+src/output/
+samples/
+outputs/
+chatterbox_runpod/samples/
+syn_out/
+*_story.txt
+*_story.json
+*_story.wav
+narrated_*.txt
+narrated_*.wav
+gpu_test.*
+myaudio.wav
+cindrella.*
+
+# ============================================================================
+# Jupyter Notebooks
+# ============================================================================
+.ipynb_checkpoints/
+*.ipynb
+
+# ============================================================================
+# Operating System
+# ============================================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================================
+# Gradio
+# ============================================================================
+.gradio/
+gradio_cached_examples/
+
+# ============================================================================
+# Logs
+# ============================================================================
+*.log
+logs/
+
+# ============================================================================
+# Temporary Files
+# ============================================================================
+tmp/
+temp/
+*.tmp
+
+# ============================================================================
+# Project Specific
+# ============================================================================
+# Keep .env but ignore actual env file
+.env
+!.env.example
+
+# Audio samples (keep directory but ignore large files)
+# samples/
+# !samples/.gitkeep
+
+# Test outputs
+test_output/
+*.test.wav
+
+# RunPod deployment cache
+.runpod/
+
+#data
+data/
+
+# ============================================================================
+# Next.js (Frontend)
+# ============================================================================
+frontend/.next/
+frontend/out/
+frontend/.env.local
+frontend/.env.production.local
+frontend/.env.development.local
+frontend/build/
+
+# Python
+.venv/
+__pycache__/
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+
+# Build
+dist/
+build/
+.next/

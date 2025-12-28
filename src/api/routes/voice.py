@@ -1,0 +1,126 @@
+"""
+Voice API Routes
+"""
+from fastapi import APIRouter, HTTPException, UploadFile, File
+from typing import List
+import uuid
+from datetime import datetime
+from pathlib import Path
+import shutil
+import librosa
+
+from ..models.voice import (
+    VoiceUploadResponse,
+    VoiceLibraryResponse,
+    VoiceLibraryItem,
+)
+
+router = APIRouter(prefix="/api/v1/voice", tags=["voice"])
+
+# Voice library storage (in production, use a database)
+voice_library: List[VoiceLibraryItem] = []
+
+# Voice samples directory
+VOICE_SAMPLES_DIR = Path("src/output/voice_samples")
+VOICE_SAMPLES_DIR.mkdir(parents=True, exist_ok=True)
+
+
+@router.post("/upload", response_model=VoiceUploadResponse)
+async def upload_voice_sample(file: UploadFile = File(...)):
+    """
+    Upload a voice sample for voice cloning
+    """
+    try:
+        # Validate file type
+        allowed_extensions = {".wav", ".mp3", ".flac"}
+        file_extension = Path(file.filename).suffix.lower()
+
+        if file_extension not in allowed_extensions:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid file type. Allowed types: {', '.join(allowed_extensions)}"
+            )
+
+        # Generate unique voice ID
+        voice_id = str(uuid.uuid4())
+
+        # Save file
+        file_path = VOICE_SAMPLES_DIR / f"{voice_id}{file_extension}"
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # Get audio duration and sample rate
+        try:
+            audio, sr = librosa.load(str(file_path), sr=None)
+            duration = librosa.get_duration(y=audio, sr=sr)
+            sample_rate = sr
+        except Exception as e:
+            # If librosa fails, use default values
+            duration = 0.0
+            sample_rate = 22050
+
+        # Generate URL
+        sample_url = f"/output/voice_samples/{voice_id}{file_extension}"
+
+        # Add to voice library
+        voice_item = VoiceLibraryItem(
+            voice_id=voice_id,
+            name=file.filename,
+            uploaded_at=datetime.now().isoformat(),
+            sample_url=sample_url,
+            duration=duration,
+        )
+        voice_library.append(voice_item)
+
+        return VoiceUploadResponse(
+            voice_id=voice_id,
+            sample_url=sample_url,
+            duration=duration,
+            sample_rate=sample_rate,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to upload voice sample: {str(e)}")
+
+
+@router.get("/library", response_model=VoiceLibraryResponse)
+async def get_voice_library():
+    """
+    Get list of all uploaded voice samples
+    """
+    try:
+        return VoiceLibraryResponse(voices=voice_library)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to get voice library: {str(e)}")
+
+
+@router.delete("/{voice_id}")
+async def delete_voice_sample(voice_id: str):
+    """
+    Delete a voice sample from the library
+    """
+    try:
+        # Find voice in library
+        voice_item = None
+        for i, voice in enumerate(voice_library):
+            if voice.voice_id == voice_id:
+                voice_item = voice_library.pop(i)
+                break
+
+        if not voice_item:
+            raise HTTPException(status_code=404, detail="Voice sample not found")
+
+        # Delete file
+        for file_path in VOICE_SAMPLES_DIR.glob(f"{voice_id}.*"):
+            file_path.unlink()
+
+        return {"message": "Voice sample deleted successfully", "voice_id": voice_id}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete voice sample: {str(e)}")
