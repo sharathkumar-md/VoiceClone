@@ -7,9 +7,11 @@ import os
 import sys
 from pathlib import Path
 
-# Add src to Python path
+# Get the script directory (project root)
 ROOT = Path(__file__).parent
-sys.path.insert(0, str(ROOT / "src"))
+
+# Change to src directory where all the Python modules are located
+os.chdir(ROOT / "src")
 
 # Get port from environment (Render provides this)
 PORT = int(os.getenv("PORT", 8000))
