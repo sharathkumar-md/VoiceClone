@@ -4,8 +4,8 @@
 # Get the script directory (project root)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Add src directory to PYTHONPATH so Python can find the api module
-export PYTHONPATH="${SCRIPT_DIR}/src:${PYTHONPATH}"
+# Change to src directory where all the Python modules are located
+cd "${SCRIPT_DIR}/src" || exit 1
 
-# Run uvicorn from the project root
+# Run uvicorn from the src directory
 exec uvicorn api.main:app --host 0.0.0.0 --port "${PORT:-8000}"
