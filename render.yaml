@@ -40,5 +40,5 @@ services:
       - key: NODE_VERSION
         value: 18.17.0
       - key: NEXT_PUBLIC_API_URL
-        sync: false  # Set manually to: https://voiceclone-api.onrender.com (or your backend URL)
+        value: https://voiceclone-api.onrender.com  # Update this after backend is deployed
     autoDeploy: true
