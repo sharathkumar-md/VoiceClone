@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 import logging
 
-from ..models.story import (
+from api.models.story import (
     StoryGenerateRequest,
     StoryGenerateResponse,
     StoryEditRequest,
