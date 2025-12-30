@@ -9,7 +9,7 @@ services:
     plan: free  # WARNING: May fail due to ML dependencies! Upgrade to standard if build fails
     region: oregon  # Choose your preferred region
     branch: main
-    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    buildCommand: pip install --upgrade pip && pip install -r requirements-render.txt
     startCommand: bash start.sh
     envVars:
       - key: PYTHON_VERSION
@@ -40,5 +40,8 @@ services:
       - key: NODE_VERSION
         value: 18.17.0
       - key: NEXT_PUBLIC_API_URL
-        value: https://voiceclone-api.onrender.com  # Update this after backend is deployed
+        fromService:
+          type: web
+          name: voiceclone-api
+          envVarKey: RENDER_EXTERNAL_URL
     autoDeploy: true
