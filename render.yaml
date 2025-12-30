@@ -9,9 +9,8 @@ services:
     plan: free  # WARNING: May fail due to ML dependencies! Upgrade to standard if build fails
     region: oregon  # Choose your preferred region
     branch: main
-    rootDir: src
-    buildCommand: pip install --upgrade pip && pip install -r ../requirements-render.txt
-    startCommand: bash ../start.sh
+    buildCommand: pip install --upgrade pip && pip install -r requirements-render.txt
+    startCommand: cd src && python -m uvicorn api.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.12
