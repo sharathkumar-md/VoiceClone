@@ -3,5 +3,7 @@
 set -o errexit
 
 # Render sets working dir to /opt/render/project/src/
-# The src code is in src/ subdirectory, so we use src.api.main:app
-exec python -m uvicorn src.api.main:app --host 0.0.0.0 --port "${PORT:-8000}"
+# But our code has another src/ subdirectory, so we cd into it
+# This way relative imports in the code will work correctly
+cd src
+exec python -m uvicorn api.main:app --host 0.0.0.0 --port "${PORT:-8000}"
