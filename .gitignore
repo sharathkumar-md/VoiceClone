@@ -92,7 +92,10 @@ checkpoints/
 *.pt
 *.pth
 *.ckpt
-models/
+# Ignore ML model directories but NOT src/api/models (which contains code)
+/models/
+**/chatterbox/models/*.pt
+**/chatterbox/models/*.pth
 .cache/
 huggingface/
 hf_cache/
