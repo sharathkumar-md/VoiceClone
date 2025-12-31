@@ -27,6 +27,14 @@ except ImportError:
     _has_audio_synthesizer = False
     AudioSynthesizer = None
 
+# RunPodTTSClient doesn't require torch - use as fallback
+try:
+    from story_narrator.runpod_client import RunPodTTSClient
+    _has_runpod_client = True
+except ImportError:
+    _has_runpod_client = False
+    RunPodTTSClient = None
+
 # Set up logger
 logger = logging.getLogger(__name__)
 
@@ -42,24 +50,31 @@ router = APIRouter(prefix="/api/v1/tts", tags=["tts"])
 # Task storage (in production, use Redis or a database)
 tasks: Dict[str, Dict] = {}
 
-# Initialize audio synthesizer
-audio_synthesizer = None
+# Initialize synthesizer (could be AudioSynthesizer or RunPodTTSClient)
+synthesizer = None
 
-def get_audio_synthesizer():
-    global audio_synthesizer
-    if not _has_audio_synthesizer:
-        raise ImportError(
-            "AudioSynthesizer is not available. "
-            "This usually means torch is not installed. "
-            "For Render deployment, TTS functionality requires RunPod or external GPU service."
-        )
-    if audio_synthesizer is None:
-        # Use RunPod for fast serverless GPU generation (100x faster than CPU)
-        audio_synthesizer = AudioSynthesizer(
-            device="cpu",  # Device doesn't matter when using RunPod
-            use_runpod=True  # Enable RunPod serverless
-        )
-    return audio_synthesizer
+def get_synthesizer():
+    """Get TTS synthesizer - uses RunPodTTSClient if torch is not available"""
+    global synthesizer
+
+    if synthesizer is None:
+        # Prefer RunPodTTSClient if available (doesn't need torch)
+        if _has_runpod_client:
+            logger.info("Using RunPodTTSClient for TTS (torch not required)")
+            synthesizer = RunPodTTSClient()
+        elif _has_audio_synthesizer:
+            logger.info("Using AudioSynthesizer with RunPod")
+            synthesizer = AudioSynthesizer(
+                device="cpu",
+                use_runpod=True
+            )
+        else:
+            raise ImportError(
+                "No TTS synthesizer available. "
+                "Install torch for AudioSynthesizer or configure RunPod for RunPodTTSClient."
+            )
+
+    return synthesizer
 
 
 def sanitize_text_for_tts(text: str) -> str:
@@ -122,7 +137,7 @@ async def generate_audio_task(task_id: str, request: TTSGenerateRequest):
         tasks[task_id]["status"] = "processing"
         tasks[task_id]["progress"] = 10
 
-        synthesizer = get_audio_synthesizer()
+        synth = get_synthesizer()
 
         # Get voice sample path from voice ID or base64
         voice_sample_path = None
@@ -153,59 +168,72 @@ async def generate_audio_task(task_id: str, request: TTSGenerateRequest):
                     tasks[task_id]["error"] = f"Failed to decode voice sample: {str(e)}"
                     return
 
-        # Set voice sample if provided
-        if voice_sample_path:
-            tasks[task_id]["progress"] = 30
-
-            # Use original audio file without conversion
-            # The RunPod handler seems to work better with original format
-            # voice_sample_path = convert_to_mono(Path(voice_sample_path))
-
-            synthesizer.set_voice(
-                str(voice_sample_path),
-                exaggeration=request.exaggeration
-            )
-        else:
-            # Use a default voice sample or handle the case where no voice is provided
+        # Verify voice sample
+        if not voice_sample_path:
             tasks[task_id]["status"] = "failed"
             tasks[task_id]["error"] = "Voice sample is required for TTS generation"
             return
 
-        # Update progress
-        tasks[task_id]["progress"] = 40
+        tasks[task_id]["progress"] = 30
 
         # Generate audio
         output_dir = Path("src/output")
         output_dir.mkdir(parents=True, exist_ok=True)
         output_path = output_dir / f"narration_{task_id}.wav"
 
-        # Update progress
-        tasks[task_id]["progress"] = 50
+        tasks[task_id]["progress"] = 40
 
-        # Process text using TextProcessor (same as working Gradio UI)
+        # Process text
         logger.info(f"Processing text ({len(request.text)} chars)...")
         processed = text_processor.process_story(request.text)
-
-        # Extract text chunks and pause durations
         chunks = processed["chunks"]
         text_chunks = [c.text for c in chunks]
         pause_durations = [c.pause_after for c in chunks]
 
         logger.info(f"Text processed into {len(text_chunks)} chunks")
-        logger.info(f"Estimated duration: {processed['metadata']['estimated_duration_seconds']:.1f}s")
 
-        # Log first few chunks for debugging
-        for i, chunk in enumerate(text_chunks[:3], 1):
-            logger.info(f"Chunk {i}: {len(chunk)} chars - {chunk[:100]}...")
+        tasks[task_id]["progress"] = 50
 
-        # Generate the audio using synthesize_and_save
-        result = synthesizer.synthesize_and_save(
-            text_chunks=text_chunks,
-            output_path=str(output_path),
-            pause_durations=pause_durations,  # Use proper pause durations
-            format="wav",
-            show_progress=False
-        )
+        # Use different synthesis methods based on synthesizer type
+        if isinstance(synth, RunPodTTSClient):
+            # RunPodTTSClient: synthesize each chunk and combine
+            logger.info("Using RunPodTTSClient for synthesis")
+            audio_segments = []
+
+            for i, chunk_text in enumerate(text_chunks):
+                logger.info(f"Synthesizing chunk {i+1}/{len(text_chunks)}")
+                audio_data = synth.synthesize_text(
+                    text=chunk_text,
+                    voice_sample_path=str(voice_sample_path),
+                    exaggeration=request.exaggeration,
+                    temperature=request.temperature,
+                    cfg_weight=request.cfgWeight
+                )
+                audio_segments.append(audio_data)
+                tasks[task_id]["progress"] = 50 + int(40 * (i + 1) / len(text_chunks))
+
+            # Combine audio segments and save
+            with open(output_path, 'wb') as f:
+                for segment in audio_segments:
+                    f.write(segment)
+
+            result = {"output_path": str(output_path)}
+
+        else:
+            # AudioSynthesizer: use set_voice and synthesize_and_save
+            logger.info("Using AudioSynthesizer for synthesis")
+            synth.set_voice(
+                str(voice_sample_path),
+                exaggeration=request.exaggeration
+            )
+
+            result = synth.synthesize_and_save(
+                text_chunks=text_chunks,
+                output_path=str(output_path),
+                pause_durations=pause_durations,
+                format="wav",
+                show_progress=False
+            )
 
         tasks[task_id]["progress"] = 90
 
