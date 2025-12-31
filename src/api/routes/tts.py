@@ -9,8 +9,6 @@ from datetime import datetime
 import base64
 import os
 from pathlib import Path
-import soundfile as sf
-import numpy as np
 import re
 import logging
 
@@ -95,6 +93,8 @@ def convert_to_mono(audio_path: Path) -> Path:
     Returns path to processed audio file.
     """
     import librosa
+    import soundfile as sf
+    import numpy as np
 
     # Read audio file and resample to 24kHz
     target_sr = 24000  # Chatterbox TTS expects 24kHz
