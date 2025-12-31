@@ -19,8 +19,15 @@ from ..models.tts import (
     TTSGenerateResponse,
     TTSStatusResponse,
 )
-from story_narrator.audio_synthesizer import AudioSynthesizer
 from story_narrator.text_processor import TextProcessor
+
+# AudioSynthesizer requires torch - make it optional
+try:
+    from story_narrator.audio_synthesizer import AudioSynthesizer
+    _has_audio_synthesizer = True
+except ImportError:
+    _has_audio_synthesizer = False
+    AudioSynthesizer = None
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -42,6 +49,12 @@ audio_synthesizer = None
 
 def get_audio_synthesizer():
     global audio_synthesizer
+    if not _has_audio_synthesizer:
+        raise ImportError(
+            "AudioSynthesizer is not available. "
+            "This usually means torch is not installed. "
+            "For Render deployment, TTS functionality requires RunPod or external GPU service."
+        )
     if audio_synthesizer is None:
         # Use RunPod for fast serverless GPU generation (100x faster than CPU)
         audio_synthesizer = AudioSynthesizer(
