@@ -60,8 +60,16 @@ def get_synthesizer():
     if synthesizer is None:
         # Prefer RunPodTTSClient if available (doesn't need torch)
         if _has_runpod_client:
-            logger.info("Using RunPodTTSClient for TTS (torch not required)")
-            synthesizer = RunPodTTSClient()
+            try:
+                logger.info("Initializing RunPodTTSClient for TTS (torch not required)")
+                synthesizer = RunPodTTSClient()
+                logger.info("RunPodTTSClient initialized successfully")
+            except ValueError as e:
+                logger.error(f"Failed to initialize RunPodTTSClient: {e}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"RunPod configuration error: {str(e)}. Please set RUNPOD_API_KEY and RUNPOD_ENDPOINT_ID environment variables."
+                )
         elif _has_audio_synthesizer:
             logger.info("Using AudioSynthesizer with RunPod")
             synthesizer = AudioSynthesizer(
@@ -69,9 +77,9 @@ def get_synthesizer():
                 use_runpod=True
             )
         else:
-            raise ImportError(
-                "No TTS synthesizer available. "
-                "Install torch for AudioSynthesizer or configure RunPod for RunPodTTSClient."
+            raise HTTPException(
+                status_code=500,
+                detail="No TTS synthesizer available. Install torch for AudioSynthesizer or configure RunPod for RunPodTTSClient."
             )
 
     return synthesizer
@@ -195,7 +203,10 @@ async def generate_audio_task(task_id: str, request: TTSGenerateRequest):
         tasks[task_id]["progress"] = 50
 
         # Use different synthesis methods based on synthesizer type
-        if isinstance(synth, RunPodTTSClient):
+        # Check by class name to avoid issues when RunPodTTSClient is None
+        is_runpod = _has_runpod_client and type(synth).__name__ == 'RunPodTTSClient'
+
+        if is_runpod:
             # RunPodTTSClient: synthesize each chunk and combine
             logger.info("Using RunPodTTSClient for synthesis")
             audio_segments = []
