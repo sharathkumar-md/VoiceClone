@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,16 @@ export function AudioSettings({ storyText, storyId }: AudioSettingsProps) {
   const [error, setError] = useState<string | null>(null);
   const [voiceId, setVoiceId] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleVoiceUploaded = (id: string, sampleUrl: string) => {
     setVoiceId(id);
@@ -57,6 +67,12 @@ export function AudioSettings({ storyText, storyId }: AudioSettingsProps) {
           setProgressMessage(status.message || 'Processing...');
 
           if (status.status === 'completed') {
+            // Clear any existing timeout
+            if (pollingTimeoutRef.current) {
+              clearTimeout(pollingTimeoutRef.current);
+              pollingTimeoutRef.current = null;
+            }
+
             // Prepend backend URL to the audio path
             const fullAudioUrl = status.audio_url?.startsWith('http')
               ? status.audio_url
@@ -64,12 +80,25 @@ export function AudioSettings({ storyText, storyId }: AudioSettingsProps) {
             setAudioUrl(fullAudioUrl);
             setIsGenerating(false);
           } else if (status.status === 'failed') {
+            // Clear any existing timeout
+            if (pollingTimeoutRef.current) {
+              clearTimeout(pollingTimeoutRef.current);
+              pollingTimeoutRef.current = null;
+            }
+
             setError(status.error || 'Audio generation failed');
             setIsGenerating(false);
           } else {
-            setTimeout(pollStatus, 1000);
+            // Continue polling only if still generating
+            pollingTimeoutRef.current = setTimeout(pollStatus, 1000);
           }
         } catch (err) {
+          // Clear any existing timeout on error
+          if (pollingTimeoutRef.current) {
+            clearTimeout(pollingTimeoutRef.current);
+            pollingTimeoutRef.current = null;
+          }
+
           setError(err instanceof Error ? err.message : 'Failed to check status');
           setIsGenerating(false);
         }
@@ -83,6 +112,12 @@ export function AudioSettings({ storyText, storyId }: AudioSettingsProps) {
   };
 
   const handleCancelGeneration = () => {
+    // Clear polling timeout
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
+    }
+
     setIsGenerating(false);
     setProgress(0);
     setProgressMessage('');
