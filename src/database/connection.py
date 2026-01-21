@@ -60,6 +60,7 @@ def init_db():
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS stories (
                     id VARCHAR(255) PRIMARY KEY,
+                    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
                     title TEXT,
                     text TEXT NOT NULL,
                     theme VARCHAR(50) NOT NULL,
@@ -76,16 +77,21 @@ def init_db():
                 )
             """)
 
-            # Create index for faster queries
+            # Create indexes for faster queries
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_created_at
                 ON stories(created_at DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_stories_user_id
+                ON stories(user_id)
             """)
         else:
             # SQLite schema
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS stories (
                     id TEXT PRIMARY KEY,
+                    user_id INTEGER,
                     title TEXT,
                     text TEXT NOT NULL,
                     theme TEXT NOT NULL,
@@ -98,14 +104,19 @@ def init_db():
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     audio_url TEXT,
-                    metadata TEXT
+                    metadata TEXT,
+                    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
                 )
             """)
 
-            # Create index for faster queries
+            # Create indexes for faster queries
             cursor.execute("""
                 CREATE INDEX IF NOT EXISTS idx_created_at
                 ON stories(created_at DESC)
+            """)
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_stories_user_id
+                ON stories(user_id)
             """)
 
         conn.commit()

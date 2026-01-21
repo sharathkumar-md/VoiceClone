@@ -67,6 +67,7 @@ class StoryService:
         tone: str,
         length: str,
         word_count: int,
+        user_id: Optional[int] = None,
         story_id: Optional[str] = None,
         audio_url: Optional[str] = None,
         metadata: Optional[Dict] = None
@@ -81,6 +82,7 @@ class StoryService:
             tone: Story tone
             length: Story length
             word_count: Number of words
+            user_id: User ID who owns this story
             story_id: Optional custom ID (generates UUID if not provided)
             audio_url: Optional audio file URL
             metadata: Optional metadata dict
@@ -103,12 +105,12 @@ class StoryService:
             cursor = get_cursor(conn)
             cursor.execute(f"""
                 INSERT INTO stories (
-                    id, title, text, theme, style, tone, length,
+                    id, user_id, title, text, theme, style, tone, length,
                     word_count, thumbnail_color, preview_text,
                     created_at, updated_at, audio_url, metadata
-                ) VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph})
+                ) VALUES ({ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph}, {ph})
             """, (
-                story_id, title, text, theme, style, tone, length,
+                story_id, user_id, title, text, theme, style, tone, length,
                 word_count, thumbnail_color, preview_text,
                 now, now, audio_url, json.dumps(metadata) if metadata else None
             ))
@@ -117,6 +119,7 @@ class StoryService:
         # Return created story
         return Story(
             id=story_id,
+            user_id=user_id,
             title=title,
             text=text,
             theme=theme,
@@ -154,6 +157,7 @@ class StoryService:
 
     @staticmethod
     def list_stories(
+        user_id: Optional[int] = None,
         limit: int = 20,
         offset: int = 0,
         sort_by: str = "created_at",
@@ -163,6 +167,7 @@ class StoryService:
         List stories with pagination
 
         Args:
+            user_id: Filter by user ID (if provided, only returns user's stories)
             limit: Number of stories per page
             offset: Number of stories to skip
             sort_by: Column to sort by
@@ -175,17 +180,26 @@ class StoryService:
         with get_db() as conn:
             cursor = get_cursor(conn)
 
+            # Build WHERE clause for user filtering
+            where_clause = ""
+            count_params = []
+            if user_id is not None:
+                where_clause = f"WHERE user_id = {ph}"
+                count_params.append(user_id)
+
             # Get total count
-            cursor.execute("SELECT COUNT(*) as count FROM stories")
+            cursor.execute(f"SELECT COUNT(*) as count FROM stories {where_clause}", count_params)
             total = cursor.fetchone()['count']
 
             # Get stories (DISTINCT to prevent duplicates)
             query = f"""
                 SELECT DISTINCT * FROM stories
+                {where_clause}
                 ORDER BY {sort_by} {order}
                 LIMIT {ph} OFFSET {ph}
             """
-            cursor.execute(query, (limit, offset))
+            query_params = count_params + [limit, offset]
+            cursor.execute(query, query_params)
             rows = cursor.fetchall()
 
             stories = [Story.from_db_row(row) for row in rows]
@@ -257,16 +271,23 @@ class StoryService:
         return StoryService.get_story(story_id)
 
     @staticmethod
-    def delete_story(story_id: str) -> bool:
+    def delete_story(story_id: str, user_id: Optional[int] = None) -> bool:
         """
-        Delete story by ID
+        Delete story by ID with optional ownership verification
 
         Args:
             story_id: Story ID to delete
+            user_id: If provided, verifies ownership before deletion
 
         Returns:
-            True if deleted, False if not found
+            True if deleted, False if not found or not owned by user
         """
+        # Ownership check if user_id provided
+        if user_id is not None:
+            story = StoryService.get_story(story_id)
+            if not story or story.user_id != user_id:
+                return False
+
         ph = get_placeholder()
         with get_db() as conn:
             cursor = get_cursor(conn)
@@ -275,3 +296,20 @@ class StoryService:
             conn.commit()
 
         return deleted
+
+    @staticmethod
+    def get_story_with_ownership(story_id: str, user_id: int) -> Optional[Story]:
+        """
+        Get story by ID with ownership verification
+
+        Args:
+            story_id: Story ID
+            user_id: User ID for ownership check
+
+        Returns:
+            Story if found and owned by user, None otherwise
+        """
+        story = StoryService.get_story(story_id)
+        if story and story.user_id == user_id:
+            return story
+        return None

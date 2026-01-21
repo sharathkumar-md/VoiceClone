@@ -1,7 +1,9 @@
 """
 Stories API Routes - Dashboard & Story Management
+
+All endpoints require authentication to ensure users can only access their own stories.
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
 from pydantic import BaseModel, Field
 import logging
@@ -10,6 +12,7 @@ import uuid
 from database.story_service import StoryService
 from database.connection import init_db
 from story_narrator.story_generator import StoryGenerator
+from ...auth.dependencies import get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/stories", tags=["stories"])
@@ -41,19 +44,24 @@ async def list_stories(
     limit: int = Query(20, ge=1, le=100, description="Number of stories per page"),
     offset: int = Query(0, ge=0, description="Number of stories to skip"),
     sort_by: str = Query("created_at", description="Column to sort by"),
-    order: str = Query("DESC", pattern="^(ASC|DESC)$", description="Sort order")
+    order: str = Query("DESC", pattern="^(ASC|DESC)$", description="Sort order"),
+    user: dict = Depends(get_current_user)
 ):
     """
-    Get list of all stories with pagination
+    Get list of authenticated user's stories with pagination
+
+    Requires:
+        - Authentication (Bearer token)
 
     Returns:
-        - stories: List of story objects (without full text)
-        - total: Total number of stories
+        - stories: List of user's story objects (without full text)
+        - total: Total number of user's stories
         - limit: Stories per page
         - offset: Current offset
     """
     try:
         result = StoryService.list_stories(
+            user_id=user["id"],
             limit=limit,
             offset=offset,
             sort_by=sort_by,
@@ -74,9 +82,13 @@ async def list_stories(
 
 
 @router.get("/{story_id}")
-async def get_story(story_id: str):
+async def get_story(story_id: str, user: dict = Depends(get_current_user)):
     """
     Get single story by ID with full text
+
+    Requires:
+        - Authentication (Bearer token)
+        - Story must belong to authenticated user
 
     Args:
         story_id: Story UUID
@@ -90,6 +102,10 @@ async def get_story(story_id: str):
         if not story:
             raise HTTPException(status_code=404, detail="Story not found")
 
+        # Ownership check
+        if story.user_id != user["id"]:
+            raise HTTPException(status_code=403, detail="Access denied: you do not own this story")
+
         return story.to_dict()
 
     except HTTPException:
@@ -100,9 +116,13 @@ async def get_story(story_id: str):
 
 
 @router.delete("/{story_id}")
-async def delete_story(story_id: str):
+async def delete_story(story_id: str, user: dict = Depends(get_current_user)):
     """
     Delete story by ID
+
+    Requires:
+        - Authentication (Bearer token)
+        - Story must belong to authenticated user
 
     Args:
         story_id: Story UUID
@@ -111,10 +131,11 @@ async def delete_story(story_id: str):
         Success message with deleted story ID
     """
     try:
-        deleted = StoryService.delete_story(story_id)
+        # Delete with ownership verification
+        deleted = StoryService.delete_story(story_id, user_id=user["id"])
 
         if not deleted:
-            raise HTTPException(status_code=404, detail="Story not found")
+            raise HTTPException(status_code=404, detail="Story not found or access denied")
 
         return {
             "message": "Story deleted successfully",

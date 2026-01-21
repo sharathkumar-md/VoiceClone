@@ -175,6 +175,7 @@ class RefreshToken:
 class Story:
     """Story database model"""
     id: str
+    user_id: Optional[int]
     title: str
     text: str
     theme: str
@@ -194,6 +195,7 @@ class Story:
         """Create Story from database row"""
         return cls(
             id=row['id'],
+            user_id=row.get('user_id'),
             title=row['title'] or '',
             text=row['text'],
             theme=row['theme'],
@@ -219,6 +221,7 @@ class Story:
 
         return {
             'id': self.id,
+            'user_id': self.user_id,
             'title': self.title,
             'text': self.text,
             'theme': self.theme,
