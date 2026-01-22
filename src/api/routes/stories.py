@@ -150,9 +150,13 @@ async def delete_story(story_id: str, user: dict = Depends(get_current_user)):
 
 
 @router.patch("/{story_id}/audio")
-async def update_story_audio(story_id: str, audio_url: str):
+async def update_story_audio(story_id: str, audio_url: str, user: dict = Depends(get_current_user)):
     """
     Update story with audio URL after audio generation
+
+    Requires:
+        - Authentication (Bearer token)
+        - Story must belong to authenticated user
 
     Args:
         story_id: Story UUID
@@ -162,6 +166,13 @@ async def update_story_audio(story_id: str, audio_url: str):
         Updated story object
     """
     try:
+        # Verify ownership first
+        story = StoryService.get_story(story_id)
+        if not story:
+            raise HTTPException(status_code=404, detail="Story not found")
+        if story.user_id != user["id"]:
+            raise HTTPException(status_code=403, detail="Access denied: you do not own this story")
+
         updated_story = StoryService.update_story(
             story_id=story_id,
             audio_url=audio_url
@@ -180,9 +191,13 @@ async def update_story_audio(story_id: str, audio_url: str):
 
 
 @router.post("/{story_id}/create-similar", response_model=CreateSimilarResponse)
-async def create_similar_story(story_id: str, request: CreateSimilarRequest):
+async def create_similar_story(story_id: str, request: CreateSimilarRequest, user: dict = Depends(get_current_user)):
     """
     Create a similar story based on an existing story with AI modifications
+
+    Requires:
+        - Authentication (Bearer token)
+        - Original story must belong to authenticated user
 
     Args:
         story_id: Original story UUID
@@ -196,6 +211,10 @@ async def create_similar_story(story_id: str, request: CreateSimilarRequest):
         original_story = StoryService.get_story(story_id)
         if not original_story:
             raise HTTPException(status_code=404, detail="Original story not found")
+
+        # Ownership check on original story
+        if original_story.user_id != user["id"]:
+            raise HTTPException(status_code=403, detail="Access denied: you do not own this story")
 
         # Initialize story generator
         generator = StoryGenerator()
@@ -264,7 +283,7 @@ async def create_similar_story(story_id: str, request: CreateSimilarRequest):
         # Calculate word count
         word_count = len(new_story_text.split())
 
-        # Save new story to database
+        # Save new story to database with user ownership
         new_story_id = str(uuid.uuid4())
         saved_story = StoryService.create_story(
             story_id=new_story_id,
@@ -274,6 +293,7 @@ async def create_similar_story(story_id: str, request: CreateSimilarRequest):
             tone=original_story.tone,
             length=original_story.length,
             word_count=word_count,
+            user_id=user["id"],
             metadata={
                 "original_story_id": story_id,
                 "created_from": "similar",

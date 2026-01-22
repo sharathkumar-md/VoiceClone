@@ -183,6 +183,18 @@ def migrate_up():
             else:
                 logger.info("  - stories.user_id already exists")
 
+            # 5. Migrate user_id from metadata JSON to dedicated column
+            logger.info("  Migrating user_id from metadata...")
+            cursor.execute("""
+                UPDATE stories
+                SET user_id = (metadata::json->>'user_id')::integer
+                WHERE user_id IS NULL
+                  AND metadata IS NOT NULL
+                  AND metadata::json->>'user_id' IS NOT NULL
+            """)
+            migrated_count = cursor.rowcount
+            logger.info(f"  ✓ Migrated user_id for {migrated_count} existing stories")
+
         else:
             # SQLite schema
             logger.info("Creating SQLite tables...")
@@ -293,6 +305,18 @@ def migrate_up():
                 logger.info("  ✓ Added user_id to stories table")
             else:
                 logger.info("  - stories.user_id already exists")
+
+            # 5. Migrate user_id from metadata JSON to dedicated column
+            logger.info("  Migrating user_id from metadata...")
+            cursor.execute("""
+                UPDATE stories
+                SET user_id = CAST(json_extract(metadata, '$.user_id') AS INTEGER)
+                WHERE user_id IS NULL
+                  AND metadata IS NOT NULL
+                  AND json_extract(metadata, '$.user_id') IS NOT NULL
+            """)
+            migrated_count = cursor.rowcount
+            logger.info(f"  ✓ Migrated user_id for {migrated_count} existing stories")
 
         # 5. Create system user for default voices
         cursor.execute("""
